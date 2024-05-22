@@ -1,3 +1,8 @@
-import { createVitestConfig } from '../vitest.config';
+import { defineConfig } from 'vitest/config';
 
-export default createVitestConfig({ useJsDOM: false });
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+  },
+});

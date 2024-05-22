@@ -1,0 +1,19 @@
+{
+  "name": "@astral/permissions",
+  "version": "1.0.0",
+  "browser": "./src/index.ts",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "RELEASE_TAG=1 node pack",
+    "publish": "npm publish ./lib",
+    "tests": "vitest run",
+    "tests:ci": "vitest run --reporter=junit --outputFile.junit=junit.xml",
+    "lint:types": "tsc --noEmit",
+    "lint": "eslint --fix --quiet",
+    "lint:all": "eslint \"**/*.{ts,tsx}\" --fix --quiet"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "mobx": "6.x.x"
+  }
+}
