@@ -12,6 +12,9 @@ import { SystemDenialReason } from '../../enums';
 type PrepareData = () => Promise<void>;
 
 type PreparingDataStatus = {
+  /**
+   * Был ли хоть раз выполнен prepareData
+   */
   isIdle: boolean;
   isSuccess: boolean;
   isLoading: boolean;
@@ -32,6 +35,9 @@ type Config = {
  * Управляет policies и доступами: создает доступы, контролирует подготовку данных для формирования доступов
  */
 export class PolicyManagerStore {
+  /**
+   * Статус подготовки данных для формирования доступов
+   */
   public preparingDataStatus: PreparingDataStatus = {
     isIdle: true,
     isSuccess: false,
@@ -111,6 +117,9 @@ export class PolicyManagerStore {
     this.preparingDataStatus.error = err;
   };
 
+  /**
+   * Подготавливает данные для формирования доступов всех policy
+   */
   public prepareDataSync = () => {
     this.startPreparingData();
 
@@ -123,6 +132,9 @@ export class PolicyManagerStore {
       });
   };
 
+  /**
+   * Подготавливает данные для формирования доступов всех policy
+   */
   public prepareDataAsync = async () => {
     this.startPreparingData();
 
@@ -138,6 +150,15 @@ export class PolicyManagerStore {
 
   /**
    * Позволяет централизованно подготавливать данные для всех policy приложения и создавать permission
+   * @example managerStore.createPolicy({
+   *   name: 'administration',
+   *   prepareData: async () => {
+   *     await Promise.all([
+   *       userRepo.getPersonInfoQuery().async(),
+   *       billingRepo.getBillingInfoQuery().async(),
+   *     ])
+   *   },
+   * });
    */
   public createPolicy = (policyMeta: PolicyMeta): Policy => {
     this.policies.push(policyMeta);
