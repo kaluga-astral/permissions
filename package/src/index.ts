@@ -4,4 +4,4 @@ export { createRule } from './utils';
 
 export { Permission, DenialPermission, AllowedPermission } from './entities';
 
-export type { DenialReason } from './types';
+export type { DenialReason, Policy } from './types';
