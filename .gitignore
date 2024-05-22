@@ -1,0 +1,9 @@
+dist
+lib
+node_modules
+storybook-static
+
+/.idea/*
+yarn-error.log
+.DS_Store
+
