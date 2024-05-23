@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 
+import { Logger } from '../../services';
 import {
   type Permission,
   createAllowedPermission,
@@ -11,6 +12,9 @@ import { SystemDenialReason } from '../../enums';
 type PrepareData = () => Promise<void>;
 
 type PreparingDataStatus = {
+  /**
+   * Был ли хоть раз выполнен prepareData
+   */
   isIdle: boolean;
   isSuccess: boolean;
   isLoading: boolean;
@@ -23,10 +27,17 @@ type PolicyMeta = {
   prepareData: PrepareData;
 };
 
+type Config = {
+  isDebug?: boolean;
+};
+
 /**
  * Управляет policies и доступами: создает доступы, контролирует подготовку данных для формирования доступов
  */
 export class PolicyManagerStore {
+  /**
+   * Статус подготовки данных для формирования доступов
+   */
   public preparingDataStatus: PreparingDataStatus = {
     isIdle: true,
     isSuccess: false,
@@ -36,18 +47,27 @@ export class PolicyManagerStore {
 
   private policies: PolicyMeta[] = [];
 
-  constructor() {
+  private readonly logger: Logger;
+
+  constructor({ isDebug }: Config = {}) {
     makeAutoObservable(this, {}, { autoBind: true });
+    this.logger = new Logger({ isEnabled: isDebug ?? false });
   }
 
   private calcPermission = (
-    policyName: string,
+    policyLogger: Logger,
     strategy: PermissionStrategy,
   ) => {
     if (!this.preparingDataStatus.isSuccess) {
-      console.warn(
-        `${policyName}: При вычислении доступа не было получено необходимых данных`,
-      );
+      if (this.preparingDataStatus.isIdle) {
+        policyLogger.warn(
+          'Не были получены данные для формирования доступа потому, что prepareData не был вызван',
+        );
+      } else {
+        policyLogger.warn(
+          'Не были получены данные для формирования доступа потому, что вызов prepareData завершился с ошибкой',
+        );
+      }
 
       return createDenialPermission(SystemDenialReason.MissingData);
     }
@@ -59,6 +79,7 @@ export class PolicyManagerStore {
     };
 
     const deny = (reason: DenialReason) => {
+      policyLogger.info(`Отказано в доступе с причиной ${reason}`);
       result = createDenialPermission(reason);
     };
 
@@ -69,7 +90,9 @@ export class PolicyManagerStore {
     }
 
     if (result?.reason === SystemDenialReason.InternalError) {
-      console.error(new Error('Результат проверки доступа не был получен'));
+      policyLogger.error(
+        new Error('При вычислении доступа не был вызван ни allow, ни deny'),
+      );
     }
 
     return result;
@@ -94,6 +117,9 @@ export class PolicyManagerStore {
     this.preparingDataStatus.error = err;
   };
 
+  /**
+   * Подготавливает данные для формирования доступов всех policy
+   */
   public prepareDataSync = () => {
     this.startPreparingData();
 
@@ -106,6 +132,9 @@ export class PolicyManagerStore {
       });
   };
 
+  /**
+   * Подготавливает данные для формирования доступов всех policy
+   */
   public prepareDataAsync = async () => {
     this.startPreparingData();
 
@@ -121,9 +150,20 @@ export class PolicyManagerStore {
 
   /**
    * Позволяет централизованно подготавливать данные для всех policy приложения и создавать permission
+   * @example managerStore.createPolicy({
+   *   name: 'administration',
+   *   prepareData: async () => {
+   *     await Promise.all([
+   *       userRepo.getPersonInfoQuery().async(),
+   *       billingRepo.getBillingInfoQuery().async(),
+   *     ])
+   *   },
+   * });
    */
   public createPolicy = (policyMeta: PolicyMeta): Policy => {
     this.policies.push(policyMeta);
+
+    const policyLogger = this.logger.createPolicyLogger(policyMeta.name);
 
     return {
       name: policyMeta.name,
@@ -131,7 +171,7 @@ export class PolicyManagerStore {
        * Создает доступ, учитывая статус успешности подготовки данных
        */
       createPermission: (strategy: PermissionStrategy) =>
-        this.calcPermission(policyMeta.name, strategy),
+        this.calcPermission(policyLogger, strategy),
     };
   };
 }
