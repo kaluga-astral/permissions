@@ -104,7 +104,7 @@ export class AdministrationPolicyStore {
     });
   }
 
-  public calcOrgManagment = (org: Organization) =>
+  public calcOrgManagement = (org: Organization) =>
     this.policy.createPermission((allow, deny) => {
       if (!org.permissions.includes('admin')) {
         return deny(PermissionDenialReason.NoAdmin);
