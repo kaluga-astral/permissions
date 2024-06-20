@@ -43,6 +43,36 @@ describe('PolicyManagerStore', () => {
       });
     });
 
+    it('Переходит в success состояние если все policies были с флагом withoutDataPreparation=true', async () => {
+      const sut = new PolicyManagerStore();
+
+      sut.createPolicy({ name: 'test', withoutDataPreparation: true });
+      sut.createPolicy({ name: 'test2', withoutDataPreparation: true });
+      await sut.prepareDataAsync();
+
+      expect(sut.preparingDataStatus).toEqual({
+        isIdle: false,
+        isSuccess: true,
+        isLoading: false,
+        isError: false,
+      });
+    });
+
+    it('Переходит в success состояние если один из policies был с флагом withoutDataPreparation=true', async () => {
+      const sut = new PolicyManagerStore();
+
+      sut.createPolicy({ name: 'test', prepareData: async () => undefined });
+      sut.createPolicy({ name: 'test2', withoutDataPreparation: true });
+      await sut.prepareDataAsync();
+
+      expect(sut.preparingDataStatus).toEqual({
+        isIdle: false,
+        isSuccess: true,
+        isLoading: false,
+        isError: false,
+      });
+    });
+
     it('Переходит в error состояние после падения prepareData', async () => {
       const sut = new PolicyManagerStore();
 
