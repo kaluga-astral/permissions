@@ -22,6 +22,17 @@ type PreparingDataStatus = {
   error?: Error;
 };
 
+type CreationPolicyParams =
+  | {
+      name: string;
+      withoutDataPreparation?: false;
+      prepareData: PrepareData;
+    }
+  | {
+      name: string;
+      withoutDataPreparation: true;
+    };
+
 type PolicyMeta = {
   name: string;
   prepareData: PrepareData;
@@ -160,8 +171,11 @@ export class PolicyManagerStore {
    *   },
    * });
    */
-  public createPolicy = (policyMeta: PolicyMeta): Policy => {
-    this.policies.push(policyMeta);
+  public createPolicy = (policyMeta: CreationPolicyParams): Policy => {
+    this.policies.push({
+      prepareData: async () => undefined,
+      ...policyMeta,
+    });
 
     const policyLogger = this.logger.createPolicyLogger(policyMeta.name);
 

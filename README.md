@@ -77,6 +77,44 @@ export class AdministrationPolicyStore {
 }
 ```
 
+### Создание policy без подготовки данных
+
+Если в создаваемом policy нет permissions, для которых необходимо подготовить данные, то используется флаг `withoutDataPreparation`:
+```ts
+import { makeAutoObservable } from 'mobx';
+
+import type { UserRepository } from '@example/data';
+
+import { PermissionDenialReason } from '../../../../enums';
+
+import { PolicyManagerStore, Policy } from '@astral/permissions';
+
+export class AdministrationPolicyStore {
+  private readonly policy: Policy;
+
+  constructor(
+    private readonly policyManager: PolicyManagerStore,
+    private readonly userRepo: UserRepository,
+  ) {
+    makeAutoObservable(this, {}, { autoBind: true });
+
+    this.policy = this.policyManager.createPolicy({
+      name: 'administration',
+      withoutDataPreparation: true,
+    });
+  }
+
+  public calcOrgManagement = (org: Organization) =>
+    this.policy.createPermission((allow, deny) => {
+      if (!org.permissions.includes('admin')) {
+        return deny(PermissionDenialReason.NoAdmin);
+      }
+
+      allow();
+    });
+}
+```
+
 ## Создание permissions
 
 Permissions создаются с помощью метода `policy.createPermission`:
