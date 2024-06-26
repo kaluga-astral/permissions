@@ -190,4 +190,5 @@ export class PolicyManagerStore {
   };
 }
 
-export const createPolicyManagerStore = () => new PolicyManagerStore();
+export const createPolicyManagerStore = (config?: Config) =>
+  new PolicyManagerStore(config);
