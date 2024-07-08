@@ -13,7 +13,7 @@ type PrepareData = () => Promise<void>;
 
 type PreparingDataStatus = {
   /**
-   * Был ли хоть раз выполнен prepareData
+   * Флаг простаивания запроса, true если prepareData не был выполнен
    */
   isIdle: boolean;
   isSuccess: boolean;
